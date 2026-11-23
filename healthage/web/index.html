@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en" data-theme="hud">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>healthage</title>
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<div class="bg-grid" aria-hidden="true"></div>
+
+<header class="topbar">
+  <div class="brand">
+    <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><path d="M2 17h7l3-8 5 15 4-11 2 4h7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/></svg>
+    <span class="logo">healthage</span>
+    <span class="crumb">~/<span id="crumb-who">you</span><span class="cursor">_</span></span>
+  </div>
+  <div class="status">
+    <span id="src-chip" class="chip">loading</span>
+    <span id="asof" class="muted mono"></span>
+  </div>
+  <nav class="actions">
+    <button id="btn-connect" class="btn primary" hidden>Connect Google Health</button>
+    <button id="btn-sync" class="btn" hidden>Sync</button>
+    <button id="btn-demo" class="btn ghost">Demo</button>
+    <div class="seg" role="group" aria-label="Theme">
+      <button data-theme-set="hud" class="seg-b">HUD</button>
+      <button data-theme-set="terminal" class="seg-b">TERM</button>
+    </div>
+    <button id="btn-settings" class="btn ghost icon" aria-label="Settings" title="Settings">
+      <svg viewBox="0 0 24 24"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm8.2-2.3.1-1.2-.1-1.2 2-1.6-2-3.4-2.4 1a8 8 0 0 0-2-1.2L15.5 3h-4l-.4 2.6a8 8 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6-.1 1.2.1 1.2-2 1.6 2 3.4 2.4-1a8 8 0 0 0 2 1.2l.4 2.6h4l.4-2.6a8 8 0 0 0 2-1.2l2.4 1 2-3.4Z" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+    </button>
+  </nav>
+  <div id="syncbar" class="syncbar" hidden><i></i><span></span></div>
+</header>
+
+<main id="app">
+  <section id="notice" class="notice" hidden></section>
+
+  <!-- empty state -->
+  <section id="empty" class="empty panel t-violet" hidden>
+    <div class="empty-inner">
+      <p class="kicker">no data yet</p>
+      <h1>See how old your body behaves, then what would change it.</h1>
+      <p class="lede">healthage turns your wearable data into a <b>Coachable Health Age</b> and ranks twelve-week plans by projected years per unit of effort. It runs on this computer; your data goes only between here and Google.</p>
+      <div class="row gap">
+        <button class="btn primary big" data-open="connect">Connect Google Health</button>
+        <button class="btn big" id="btn-demo-2">Explore the demo</button>
+      </div>
+    </div>
+  </section>
+
+  <div id="dash" hidden>
+    <!-- Row A: hero + next moves -->
+    <section class="grid">
+      <article class="panel t-violet span-5 hero">
+        <header class="ph"><h2>Coachable Health Age</h2>
+          <div class="seg small" role="group" aria-label="Measure">
+            <button data-measure="core" class="seg-b on">CORE</button>
+            <button data-measure="extended" class="seg-b">EXTENDED</button>
+          </div>
+        </header>
+        <div class="hero-num">
+          <span id="ha-num" class="num">--</span><span class="unit">yrs</span>
+          <span id="ha-delta" class="delta"></span>
+        </div>
+        <p id="ha-sub" class="muted"></p>
+        <div id="ruler" class="ruler"></div>
+        <p id="ha-note" class="fine"></p>
+      </article>
+
+      <article class="panel t-gold span-7">
+        <header class="ph"><h2>Next moves</h2><span class="muted mono small">ranked by years at stake</span></header>
+        <ol id="moves" class="moves"></ol>
+      </article>
+    </section>
+
+    <!-- Row B: domains + futures -->
+    <section class="grid">
+      <article class="panel t-wine span-5">
+        <header class="ph"><h2>Where the years come from</h2><span class="legend-inline"><i class="sw wine"></i>adds <i class="sw gold"></i>removes</span></header>
+        <div id="domains"></div>
+      </article>
+      <article class="panel t-blue span-7">
+        <header class="ph"><h2>Twelve-week futures</h2><span class="muted mono small">core Health Age, if each plan holds</span></header>
+        <div id="futures-legend" class="legend"></div>
+        <div id="futures" class="chart tall"></div>
+      </article>
+    </section>
+
+    <!-- Row C: options + simulator -->
+    <section class="grid">
+      <div id="options" class="span-7 options"></div>
+      <article class="panel t-gold span-5 sim">
+        <header class="ph"><h2>What if</h2><button id="sim-reset" class="btn ghost small">reset</button></header>
+        <div class="sliders">
+          <label><span>Steps a day</span><output id="o-steps"></output><input id="s-steps" type="range" min="2000" max="16000" step="250"></label>
+          <label><span>Cardio-zone minutes a week</span><output id="o-cardio"></output><input id="s-cardio" type="range" min="0" max="300" step="5"></label>
+          <label><span>Main sleep, hours</span><output id="o-sleep"></output><input id="s-sleep" type="range" min="4.5" max="10" step="0.1"></label>
+          <label id="l-sd"><span>Sleep midpoint spread, minutes</span><output id="o-sd"></output><input id="s-sd" type="range" min="15" max="180" step="5"></label>
+        </div>
+        <div class="sim-out">
+          <div><p class="k">week 12, core</p><p id="sim-core" class="v">--</p></div>
+          <div><p class="k">week 12, extended</p><p id="sim-ext" class="v">--</p></div>
+          <div><p class="k">vs status quo</p><p id="sim-benefit" class="v gold">--</p></div>
+          <div><p class="k">effort</p><p id="sim-effort" class="v">--</p></div>
+        </div>
+        <div id="sim-chart" class="chart short"></div>
+      </article>
+    </section>
+
+    <!-- Row D: history + signals -->
+    <section class="grid">
+      <article class="panel t-blue span-7">
+        <header class="ph"><h2>Weekly history</h2><span class="muted mono small">Health Age minus age, per week</span></header>
+        <div id="weekly" class="chart mid"></div>
+      </article>
+      <article class="panel t-violet span-5">
+        <header class="ph"><h2>Signals</h2><span class="muted mono small">last 120 days</span></header>
+        <div id="signals" class="signals"></div>
+      </article>
+    </section>
+
+    <section class="grid">
+      <article class="panel t-violet span-7">
+        <header class="ph"><h2>Sleep timing</h2><span class="muted mono small">midpoint of each main sleep</span></header>
+        <div id="clock" class="chart mid"></div>
+      </article>
+      <article class="panel t-wine span-5">
+        <header class="ph"><h2>Sleep timing lever</h2></header>
+        <div id="levers"></div>
+      </article>
+    </section>
+
+    <section class="grid">
+      <article class="panel span-6">
+        <header class="ph"><h2>Data behind it</h2></header>
+        <div id="coverage" class="kv"></div>
+      </article>
+      <article class="panel span-6">
+        <header class="ph"><h2>Method</h2></header>
+        <div class="prose small">
+          <p>Health Age follows <b>Lee, Esmaeilpour et al. 2026</b> (Google Research, arXiv:2611.08568): each wearable domain maps to a published hazard ratio, weighted for overlap, and converted to years at 10% extra risk per year of age. The four core domains are resting heart rate, steps, main sleep and Active Zone Minutes; sleep timing, insulin resistance and VO2 max are optional.</p>
+          <p>The paper projects futures with SensorWM, a model trained on 96,957 people that is not public. Here a transparent one-person model stands in: steps and sleep follow the plan, Active Zone Minutes follow steps and cardio, and resting heart rate drifts toward a level up to 9% lower with 150 cardio-zone minutes a week (Reimers et al. 2018). Plans rank by projected years divided by one plus effort, where effort is measured against your own week-to-week range.</p>
+          <p class="warn-txt">Model projections, not medical advice. Independent implementation, not affiliated with Google.</p>
+        </div>
+      </article>
+    </section>
+  </div>
+</main>
+
+<footer class="statusline mono">
+  <span id="sl-left">healthage</span>
+  <span id="sl-right">local only</span>
+</footer>
+
+<!-- tooltip -->
+<div id="tip" class="tip" hidden></div>
+
+<!-- Connect modal -->
+<div id="m-connect" class="modal" hidden>
+  <div class="modal-card panel t-gold">
+    <header class="ph"><h2>Connect Google Health</h2><button class="btn ghost small" data-close>close</button></header>
+    <ol class="steps">
+      <li class="step"><span class="n">01</span><div>
+        <p><b>Make your own Google OAuth client</b> (one time, about 5 minutes). In Google Cloud Console: create a project, enable the <b>Google Health API</b>, set the OAuth consent screen to External and Testing with your Google account as a test user, then create an OAuth client of type <b>Desktop app</b> and download its JSON. Full walkthrough in the README.</p>
+      </div></li>
+      <li class="step"><span class="n">02</span><div>
+        <p><b>Paste that JSON</b> or load the file. It stays in <span id="home-path" class="mono">~/.healthage</span>.</p>
+        <textarea id="client-json" rows="4" spellcheck="false" placeholder='{"installed":{"client_id":"...apps.googleusercontent.com","client_secret":"..."}}'></textarea>
+        <div class="row gap"><label class="btn small file">Load file<input id="client-file" type="file" accept=".json,application/json" hidden></label>
+          <button id="btn-save-client" class="btn small">Save client</button><span id="client-state" class="muted small"></span></div>
+      </div></li>
+      <li class="step"><span class="n">03</span><div>
+        <p><b>Sign in with Google</b> and allow read access. You come back here and the first sync starts.</p>
+        <button id="btn-go-google" class="btn primary">Continue to Google</button>
+      </div></li>
+    </ol>
+  </div>
+</div>
+
+<!-- Settings drawer -->
+<aside id="drawer" class="drawer" hidden>
+  <div class="drawer-card panel t-violet">
+    <header class="ph"><h2>Settings</h2><button class="btn ghost small" data-close>close</button></header>
+    <form id="f-profile" class="form">
+      <p class="kicker">profile</p>
+      <div class="two">
+        <label>Date of birth<input name="dob" type="date" required></label>
+        <label>Sex<select name="sex"><option value="male">male</option><option value="female">female</option></select></label>
+      </div>
+      <p class="kicker">labs (optional, for insulin resistance)</p>
+      <div class="two">
+        <label>Lab date<input name="labs_date" type="date"></label>
+        <label>HbA1c %<input name="hba1c_pct" type="number" step="0.1" min="3" max="15"></label>
+        <label>Triglycerides mg/dL<input name="triglycerides_mg_dl" type="number" step="1" min="20" max="2000"></label>
+        <label>HDL mg/dL<input name="hdl_mg_dl" type="number" step="1" min="5" max="200"></label>
+      </div>
+      <label>Insulin resistance<select name="insulin_resistant">
+        <option value="auto">auto from labs (surrogate)</option><option value="true">yes, measured (HOMA-IR)</option><option value="false">no, measured</option></select></label>
+      <label>Cardio cap for plans, minutes a week<input name="max_cardio_min_week" type="number" min="30" max="300" step="10"></label>
+      <button class="btn primary" type="submit">Save profile</button>
+      <span id="profile-state" class="muted small"></span>
+    </form>
+    <div class="form">
+      <p class="kicker">google</p>
+      <p class="small muted">Redirect URI: <span id="redirect-uri" class="mono"></span></p>
+      <div class="row gap wrap">
+        <button class="btn small" data-open="connect">Client and sign-in</button>
+        <label class="small muted">Sync window <select id="sync-days"><option>60</option><option selected>120</option><option>180</option><option>365</option></select> days</label>
+        <button id="btn-disconnect" class="btn small ghost">Disconnect</button>
+      </div>
+      <p class="kicker">data</p>
+      <p class="small muted">Stored only in <span id="home-path-2" class="mono"></span>.</p>
+      <button id="btn-delete" class="btn small danger">Delete all local data</button>
+    </div>
+  </div>
+</aside>
+
+<div id="toast" class="toast" hidden></div>
+
+<script src="/static/charts.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>

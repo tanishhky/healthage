@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "healthage"
+version = "0.1.0"
+description = "Coachable Health Age and twelve-week counterfactual coaching on your own Google Health data, computed locally."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Tanishk Yadav" }]
+keywords = ["health", "wearables", "fitbit", "google-health", "biological-age", "quantified-self"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Environment :: Web Environment",
+  "Topic :: Scientific/Engineering :: Medical Science Apps.",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/tanishhky/healthage"
+Paper = "https://arxiv.org/abs/2611.08568"
+
+[project.scripts]
+healthage = "healthage.__main__:main"
+
+[tool.setuptools]
+packages = ["healthage"]
+
+[tool.setuptools.package-data]
+healthage = ["web/*"]
