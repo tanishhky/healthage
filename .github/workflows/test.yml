@@ -12,6 +12,14 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python: ["3.9", "3.11", "3.13"]
+        exclude:
+          # setup-python ships no 3.9 build for Ubuntu 26.04 (ubuntu-latest);
+          # test 3.9 on Linux with the previous LTS instead.
+          - os: ubuntu-latest
+            python: "3.9"
+        include:
+          - os: ubuntu-24.04
+            python: "3.9"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
